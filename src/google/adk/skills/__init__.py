@@ -14,16 +14,28 @@
 
 """Agent Development Kit - Skills."""
 
+from .loader import load_skill
+from .loader import load_skill_from_content
+from .loader import load_skill_from_dict
+from .loader import load_skills
 from .models import Frontmatter
 from .models import Resources
 from .models import Script
 from .models import Skill
 from .prompt import format_skills_as_xml
+from .skills_tool import SkillsTool
+from .skills_toolset import SkillsToolset
 
 __all__ = [
     "Frontmatter",
     "Resources",
     "Script",
     "Skill",
+    "SkillsTool",
+    "SkillsToolset",
     "format_skills_as_xml",
+    "load_skill",
+    "load_skill_from_content",
+    "load_skill_from_dict",
+    "load_skills",
 ]
