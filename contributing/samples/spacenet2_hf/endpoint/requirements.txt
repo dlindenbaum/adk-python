@@ -1,0 +1,5 @@
+# Extra packages for the Inference Endpoints container (torch is preinstalled).
+torchvision
+opencv-python-headless
+shapely
+rasterio
