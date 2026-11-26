@@ -48,7 +48,8 @@ Request and response:
 
 ```json
 POST {"inputs": "<base64 tif/png/jpg>",
-      "parameters": {"score_threshold": 0.544, "return_overlay": false}}
+      "parameters": {"score_threshold": 0.544, "return_overlay": false,
+                     "max_detections": 100}}
 
 {"num_buildings": 18, "image_size": [650, 650],
  "buildings": [{"score": 0.9987, "bbox": [...], "area_px": 4980,

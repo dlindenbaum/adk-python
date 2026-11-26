@@ -242,15 +242,22 @@ class EndpointClient:
     }
     deadline = time.monotonic() + self.cold_start_wait
     delay = 5.0
+    gateway_retries = 3
     while True:
       response = httpx.post(
           self.url, json=body, headers=headers, timeout=self.timeout
       )
-      if response.status_code != 503 or time.monotonic() > deadline:
+      status = response.status_code
+      if status == 503 and time.monotonic() < deadline:
+        time.sleep(delay)
+        delay = min(delay * 2, 60)
+      elif status in (502, 504) and gateway_retries:
+        # The endpoint gateway drops the odd request under load.
+        gateway_retries -= 1
+        time.sleep(2)
+      else:
         response.raise_for_status()
         return response.json()
-      time.sleep(delay)
-      delay = min(delay * 2, 60)
 
 
 def pixel_polygons(

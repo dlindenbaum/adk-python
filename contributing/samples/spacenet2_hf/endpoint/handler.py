@@ -27,7 +27,8 @@ differs from torchvision's defaults:
 
 Request (JSON):
   {"inputs": "<base64 PNG/JPEG/GeoTIFF>",
-   "parameters": {"score_threshold": 0.544, "return_overlay": false}}
+   "parameters": {"score_threshold": 0.544, "return_overlay": false,
+                  "max_detections": 100, "stretch": false}}
 
 16-bit GeoTIFFs (SpaceNet PS-RGB) are stretched per band between the 2nd and
 98th percentile of nonzero pixels, as in training. For a georeferenced input
@@ -62,6 +63,9 @@ DEFAULT_SCORE_THRESHOLD = 0.544
 # Detectron2 keeps detections down to the operating threshold; requests may
 # lower it, so the network itself runs with a permissive floor.
 _MIN_SCORE_THRESHOLD = 0.05
+# Detectron2's TEST.DETECTIONS_PER_IMAGE; a few dense Shanghai tiles exceed
+# it, so callers may raise it per request.
+_DEFAULT_MAX_DETECTIONS = 100
 _PIXEL_MEAN_BGR = (103.530, 116.280, 123.675)
 _FPN_STRIDES = (4, 8, 16, 32)
 _CANONICAL_LEVEL = 4
@@ -163,7 +167,7 @@ def build_model() -> MaskRCNN:
       rpn_nms_thresh=0.7,
       box_score_thresh=_MIN_SCORE_THRESHOLD,
       box_nms_thresh=0.5,
-      box_detections_per_img=100,
+      box_detections_per_img=_DEFAULT_MAX_DETECTIONS,
   )
   # MaskRCNN's constructor only accepts MultiScaleRoIAlign, which pools with
   # aligned=False, so the Detectron2 poolers go in afterwards.
@@ -323,12 +327,18 @@ class EndpointHandler:
     self._lock = threading.Lock()
 
   @torch.inference_mode()
-  def predict(self, rgb: np.ndarray, score_threshold: float) -> dict[str, Any]:
+  def predict(
+      self,
+      rgb: np.ndarray,
+      score_threshold: float,
+      max_detections: int = _DEFAULT_MAX_DETECTIONS,
+  ) -> dict[str, Any]:
     bgr = torch.from_numpy(rgb[:, :, ::-1].copy()).permute(2, 0, 1).float()
     with self._lock:
       self.model.roi_heads.score_thresh = min(
           score_threshold, _MIN_SCORE_THRESHOLD
       )
+      self.model.roi_heads.detections_per_img = max_detections
       out = self.model([bgr.to(self.device)])[0]
     keep = out['scores'] >= score_threshold
     scores = out['scores'][keep].cpu().numpy()
@@ -357,7 +367,8 @@ class EndpointHandler:
     rgb, georef = decode_image(
         data['inputs'], stretch=bool(params.get('stretch', False))
     )
-    result = self.predict(rgb, score_threshold)
+    max_detections = int(params.get('max_detections', _DEFAULT_MAX_DETECTIONS))
+    result = self.predict(rgb, score_threshold, max_detections)
     response = {
         'model': MODEL_ID,
         'image_size': [int(rgb.shape[0]), int(rgb.shape[1])],
