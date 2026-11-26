@@ -84,18 +84,30 @@ python spacenet2_hf/evaluate.py --split test --per-city 0 --submission test.csv
 
 ## Results
 
-`evaluate.py --per-city 100`: 400 tiles from the model's validation split,
-which it never trained on. Score threshold 0.544, SpaceNet F1 with polygon
-IoU ≥ 0.5. The model card's figures cover all 2,118 validation tiles, run
-with Detectron2.
+All numbers are on the model's full validation split, which it never trained
+on: 2,118 tiles, of which 2,117 were scored (one request hit a gateway 502
+before the client retried them). They were served by the dedicated endpoint
+(`nvidia-t4`, about 7 minutes for the split) and scored with the SpaceNet F1
+(polygon IoU ≥ 0.5) at a score threshold of 0.544. The model card's figures
+come from Detectron2 on the same split.
 
-| city | precision | recall | F1 (this port) | F1 (model card) |
+| city | precision | recall | F1 (this endpoint) | F1 (model card) |
 |---|---|---|---|---|
-| Las Vegas | 0.928 | 0.842 | 0.883 | 0.894 |
-| Paris | 0.825 | 0.703 | 0.759 | 0.776 |
-| Shanghai | 0.739 | 0.657 | 0.696 | 0.683 |
-| Khartoum | 0.661 | 0.556 | 0.604 | 0.626 |
-| **macro** | | | **0.735** | **0.745** |
+| Las Vegas | 0.929 | 0.858 | 0.892 | 0.894 |
+| Paris | 0.821 | 0.722 | 0.769 | 0.776 |
+| Shanghai | 0.739 | 0.627 | 0.678 | 0.683 |
+| Khartoum | 0.679 | 0.576 | 0.623 | 0.626 |
+| **macro** | | | **0.741** | **0.745** |
+
+The torchvision port therefore reproduces the Detectron2 model to within
+about 0.004 macro F1.
+
+**Per-city score thresholds don't help.** Thresholds tuned per city on 200
+training tiles each (Vegas 0.62, Paris 0.44, Shanghai 0.44, Khartoum 0.52)
+give a validation macro F1 of 0.7404, against 0.7407 for the single 0.544
+threshold. Even thresholds picked on the validation split itself would only
+reach about 0.742. Further gains need a stronger detector, not
+post-processing.
 
 ## Tools
 
