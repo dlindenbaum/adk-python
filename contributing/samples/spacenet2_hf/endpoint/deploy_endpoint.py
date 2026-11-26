@@ -19,7 +19,7 @@ organization (`--namespace`). Steps:
 
 1. Copy `model_final.pth` and `config.yaml` from the source model into a model
    repo of yours, next to `handler.py` and `requirements.txt`.
-2. Create a protected, scale-to-zero endpoint with `task="custom"`, so the
+2. Create an authenticated, scale-to-zero endpoint with `task="custom"`, so the
    Inference Toolkit loads `handler.EndpointHandler`.
 
   python deploy_endpoint.py --dry-run
@@ -85,7 +85,7 @@ def main():
       min_replica=0,
       max_replica=1,
       scale_to_zero_timeout=args.scale_to_zero_minutes,
-      type='protected',
+      type='authenticated',
       namespace=namespace,
   )
   print(f'model repo: {repo_id} (private)')

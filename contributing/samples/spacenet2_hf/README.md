@@ -81,6 +81,21 @@ python spacenet2_hf/evaluate.py --per-city 100 --out results.json
 python spacenet2_hf/evaluate.py --split test --per-city 0 --submission test.csv
 ```
 
+## Results
+
+`evaluate.py --per-city 100`: 400 tiles from the model's validation split,
+which it never trained on. Score threshold 0.544, SpaceNet F1 with polygon
+IoU ≥ 0.5. The model card's figures cover all 2,118 validation tiles, run
+with Detectron2.
+
+| city | precision | recall | F1 (this port) | F1 (model card) |
+|---|---|---|---|---|
+| Las Vegas | 0.928 | 0.842 | 0.883 | 0.894 |
+| Paris | 0.825 | 0.703 | 0.759 | 0.776 |
+| Shanghai | 0.739 | 0.657 | 0.696 | 0.683 |
+| Khartoum | 0.661 | 0.556 | 0.604 | 0.626 |
+| **macro** | | | **0.735** | **0.745** |
+
 ## Tools
 
 | tool | what it does |
